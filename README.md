@@ -75,8 +75,12 @@ The script will rename the repository directorty (it does not rename the git rep
 
 ### Prerequisites
 
- - A collection of unix tools are available (grep, awk, etc).
- - Create a folder structure (as defined below) to house student assignments locally.
- - Download student repos (the [gh](https://cli.github.com/) program works well for this).
+ - A collection of unix tools are available (grep, sed, tr, etc).
+ - All project repositories are in the same directory
+ - Repositories have been cloned (the [gh](https://cli.github.com/) program works well for this).
  - To create a map, it is assumed that at least 1 assignment has been completed by the students.
-   - The assignment should at least have a README.md file containing some information. 
+   - The assignment should at least have a README.md file containing a tag titled "Author: " followed by their name.
+   
+ex:
+
+    Author: Andre Keys 

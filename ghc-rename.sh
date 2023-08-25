@@ -1,11 +1,14 @@
 #!/bin/bash
 
 usage() {
-    echo "Usage: $0 [-m <apply|collect>] [-r <directory to search] [-f <mapfile to use>]"
+    echo "Usage: $0 
+    [-m <apply|collect>] 
+    [-r <directory containing repos>] 
+    [-f <mapfile to save or load from>]"
 }
 
-#extend to allow the search string to be configured
-while getopts "m::f::r:" opt; do
+#TODO extend to allow the search string to be configured
+while getopts "m::f::r::h:" opt; do
   case $opt in
     m)
         mode=${OPTARG}
@@ -16,6 +19,11 @@ while getopts "m::f::r:" opt; do
         ;;
     r)
         repodirectory=${OPTARG}
+        ;;
+    h)
+        repodirectory=${OPTARG}
+        usage
+        exit 0
         ;;
     \?)
         usage
@@ -30,9 +38,13 @@ done
 
 ghname() 
 {
-    githubname=`echo $1 | sed 's/^.*-//' | sed 's/\/$//'`
+    local githubname=`echo $1   | \
+    # replace everything until the first '-' TODO: also remove that first hyphen!
+    sed 's/^[^-]*//'              | \
+    # Remove trailing slash
+    sed 's/\/$//'`
 
-    # echo -e "\tgithub username is $githubname"
+    echo "$githubname"
 }
 
 addtomap()
@@ -51,18 +63,24 @@ collect()
         echo "Entering ${f}"
 
         cd ${f}
+
+        # get the line that should contain a name
         local studentname=`grep -i "Author:" README.md  | \
+        # make lower case
         tr '[:upper:]' '[:lower:]'                      | \
+        # remove everything until their name should begin
         sed 's/^.*: //'                                 | \
+        # remove spaces and replace with '-'
         sed 's/ /-/'`
         
         if [ ${studentname} ] 
         then
             echo -e "\tStudent name was ${studentname}"
-        
+        else 
+            echo -e "\tNo student name detected in $f" 1>&2
         fi
 
-        ghname $f
+        local githubname=`ghname $f`
 
         addtomap $githubname $studentname
 
@@ -71,15 +89,23 @@ collect()
     done
 }
 
+# queries the file that was created in collect phase. $1 should be github username from ghname
 getstudentnamefrommap() 
 {
-    studentname=`grep $1 $mapfile | \
+    # get the line that matches the github name. '--' because the github name could start with hyphen
+    local studentname=`grep -- $1 $mapfile | \
+    # remove everything until the first space (remove the github name)
     sed 's/^.* //'`
+
+    #only left with the students name (or nothing!)
+    echo "$studentname"
 }
+
+
 
 apply()
 {
-    echo "starting collect mode"
+    echo "starting apply mode"
     echo "change directory to ${repodirectory}"
     cd $repodirectory
 
@@ -87,25 +113,21 @@ apply()
 
         echo "Entering ${f}"
 
-        ghname $f
+        local githubname=`ghname $f`
 
-        getstudentnamefrommap $githubname
+        local studentname=`getstudentnamefrommap $githubname`
 
         if [[ "$studentname" == "" ]]  
         then
-            echo -e "\tno student name detected"
+            echo -e "\tno student name detected for $f" 1>&2
         else
-            finalpath=`echo "$f$studentname" | sed 's/\//-/'`
+            finalpath=`echo "$f$studentname" | sed 's/\//-/'` # remove the trailing / from the directory name and replace with '-'
             echo -e "\tmoving $f to $finalpath/"
 
             mv -i "$f" "$finalpath"
 
         fi
-
-        
-
     done 
-
 }
 
 
