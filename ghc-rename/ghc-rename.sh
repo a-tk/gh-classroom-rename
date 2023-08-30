@@ -82,9 +82,9 @@ collect()
 
         local githubname=`ghname $f`
 
-        addtomap $githubname $studentname
-
         cd $repodirectory
+
+        addtomap $githubname $studentname
         
     done
 }
